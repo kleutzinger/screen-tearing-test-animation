@@ -47,7 +47,7 @@ def generate_frame(radians: float, filename="out.png") -> None:
 
 def main():
     frame_number = 0
-    for rotation_radians in np.linspace(0, np.pi, 60):
+    for rotation_radians in np.linspace(0, np.pi, 60):  # off by one? to loop perfectly we might need 59 frames
         filename = f"img/{frame_number:05}.png"
         generate_frame(rotation_radians, filename)
         print(f"{frame_number=} rendered")
