@@ -25,7 +25,7 @@ MID_Y = HEIGHT // 2
 CENTER = (MID_X, MID_Y)
 
 
-def rot_cross_image(radians: float, filename="out.png") -> None:
+def generate_frame(radians: float, filename="out.png") -> None:
     im = Image.new("L", (WIDTH, HEIGHT), WHITE)
     # modes: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
 
@@ -46,12 +46,12 @@ def rot_cross_image(radians: float, filename="out.png") -> None:
 
 
 def main():
-    i = 0
-    for p in np.linspace(0, np.pi, 60):
-        fname = f"img/{i:05}.png"
-        rot_cross_image(p, fname)
-        print(i)
-        i += 1
+    frame_number = 0
+    for rotation_radians in np.linspace(0, np.pi, 60):
+        filename = f"img/{frame_number:05}.png"
+        generate_frame(rotation_radians, filename)
+        print(f"{frame_number=} rendered")
+        frame_number += 1
 
     subprocess.run(
         shlex.split(
