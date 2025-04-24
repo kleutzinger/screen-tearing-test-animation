@@ -13,35 +13,46 @@ import shlex
 import numpy as np
 from PIL import Image, ImageDraw
 
-HEIGHT = 1080
-WIDTH = 1920
+# Output resolution (4k)
+OUTPUT_HEIGHT = 2160
+OUTPUT_WIDTH = 3840
+
+# Supersampled resolution (8K)
+SUPER_HEIGHT = 4320
+SUPER_WIDTH = 7680
 
 WHITE = 255
 BLACK = 0
 
-MID_X = WIDTH // 2
-MID_Y = HEIGHT // 2
+# Center points for both resolutions
+OUTPUT_MID_X = OUTPUT_WIDTH // 2
+OUTPUT_MID_Y = OUTPUT_HEIGHT // 2
+SUPER_MID_X = SUPER_WIDTH // 2
+SUPER_MID_Y = SUPER_HEIGHT // 2
 
-CENTER = (MID_X, MID_Y)
+OUTPUT_CENTER = (OUTPUT_MID_X, OUTPUT_MID_Y)
+SUPER_CENTER = (SUPER_MID_X, SUPER_MID_Y)
 
 
 def generate_frame(radians: float, filename="out.png") -> None:
-    im = Image.new("L", (WIDTH, HEIGHT), WHITE)
-    # modes: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
+    # Create supersampled image
+    super_im = Image.new("L", (SUPER_WIDTH, SUPER_HEIGHT), WHITE)
+    draw = ImageDraw.Draw(super_im)
 
-    draw = ImageDraw.Draw(im)
-    # draw.line((0, 0) + im.size, fill=128, width=100)
-    # for rot_offset in [0, np.pi/2]:
     for rot_offset in np.linspace(0, np.pi, 6):
-        r = WIDTH * 2
+        r = SUPER_WIDTH * 2
         nu_radians = radians + rot_offset
 
         x = np.cos(nu_radians) * r
-        x += MID_X
+        x += SUPER_MID_X
         y = np.sin(nu_radians) * r
-        y += MID_Y
-        draw.line((WIDTH - x, HEIGHT - y, x, y), fill=BLACK, width=80)
+        y += SUPER_MID_Y
+        draw.line(
+            (SUPER_WIDTH - x, SUPER_HEIGHT - y, x, y), fill=BLACK, width=320
+        )  # Scaled width for 8K
 
+    # Downsample to 1080p using Lanczos resampling
+    im = super_im.resize((OUTPUT_WIDTH, OUTPUT_HEIGHT), Image.Resampling.LANCZOS)
     im.save(filename)
 
 
@@ -55,7 +66,7 @@ def main():
 
     subprocess.run(
         shlex.split(
-            """ffmpeg -y -f image2 -r 60 -pattern_type glob -i 'img/*.png' -vcodec libx264 -crf 22 video.mp4"""
+            """ffmpeg -y -stream_loop 29 -f image2 -r 60 -pattern_type glob -i 'img/*.png' -vcodec libx264 -crf 22 video.mp4"""
         )
     )
     subprocess.run(["vlc", "video.mp4"])
